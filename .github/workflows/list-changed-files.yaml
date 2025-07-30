@@ -1,0 +1,40 @@
+name: List Changed Files
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  list-files:
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check-changes.outputs.has_changes }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 
+
+      - name: Check for changed files
+        id: check-changes
+        run: |
+          echo "Checking for changed files..."
+
+          if git rev-parse HEAD^ >/dev/null 2>&1; then
+            echo "Files changed since last commit:"
+            git diff --name-only HEAD^ HEAD
+
+            # Set output if changes exist
+            if [ -n "$(git diff --name-only HEAD^ HEAD)" ]; then
+              echo "Changes detected."
+              echo "has_changes=true"
+            else
+              echo "No changes detected."
+              echo "has_changes=false"
+            fi
+          else
+            echo "First commit. All tracked files:"
+            git ls-files
+            echo "has_changes=true" # Assuming first commit = changes
+          fi
